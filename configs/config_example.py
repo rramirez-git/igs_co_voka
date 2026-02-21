@@ -32,3 +32,6 @@ EMAIL_HOST_USER: 'correo@domain.com.mx'
 EMAIL_HOST_PASSWORD: 'MAIL_PWD'
 EMAIL_USE_SSL: True
 DEFAULT_FROM_EMAIL: 'Sistemas IMGX<no-reply@domain.com.mx>'
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_ROOT = BASE_DIR / 'media'
