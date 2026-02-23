@@ -23,7 +23,7 @@ class DisclaimerProds(TemplateView):
         if request.user.is_authenticated:
             return self.view.get(request=request)
         else:
-            return redirect('display_open_products'))
+            return redirect('display_open_products')
 
 class DisplayOpenProds(TemplateView):
     template_name = "producto/display/open_prods.html"
