@@ -4,6 +4,7 @@ from io import BytesIO
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.generic import TemplateView
@@ -86,7 +87,7 @@ class Read(GenericRead):
             if detail:
                 detail.valor = valor
                 detail.save()
-        return HttpResponseRedirect(request.path)
+        return redirect(request.path)
 
 views.Create = Create
 views.Read = Read
@@ -117,7 +118,7 @@ class CreateFromUser(TemplateView):
                 else:
                     campo_valor.valor = request.POST.get(f"campo-{campo_valor.campo.pk}", '')
                 campo_valor.save()
-        return HttpResponseRedirect(reverse('pdf_personalizacion', kwargs={'pk': pk}))
+        return redirect('pdf_personalizacion', pk=pk)
 
 class ViewPersonalizacion(GenericRead):
     template_name = "personalizacion_producto/create_from_user.html"

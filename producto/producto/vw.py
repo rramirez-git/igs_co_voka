@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 
 from igs_app_base.views import GenericCreate
 from igs_app_base.views import GenericDelete
@@ -111,7 +112,7 @@ class Read(GenericRead):
                 frm.save()
         elif action == "delete-grupo":
             GrupoCampos.objects.filter(pk=extra).delete()
-        return HttpResponseRedirect(request.path)
+        return redirect(request.path)
 
 
 class Update(GenericUpdate):
