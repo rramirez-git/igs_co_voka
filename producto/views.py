@@ -1,4 +1,5 @@
 from django.http import HttpResponseRedirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import TemplateView
 
@@ -22,8 +23,7 @@ class DisclaimerProds(TemplateView):
         if request.user.is_authenticated:
             return self.view.get(request=request)
         else:
-            print(f"{reverse('display_open_products') =}")
-            return HttpResponseRedirect(reverse('display_open_products'))
+            return redirect('display_open_products'))
 
 class DisplayOpenProds(TemplateView):
     template_name = "producto/display/open_prods.html"
