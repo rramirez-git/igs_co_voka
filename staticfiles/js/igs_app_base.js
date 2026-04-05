@@ -4,20 +4,20 @@ let adjust_4_menu_admin = inputs => {
     })
 }
 
-let openPanel = (body, title, close = true, footer = null, idmodal="modal-panel-message" ) => {
+let openPanel = (body, title, close = true, footer = null, idmodal = "modal-panel-message") => {
     const existingEl = document.getElementById(idmodal);
-    if(existingEl) {
+    if (existingEl) {
         const instance = bootstrap.Modal.getInstance(existingEl);
-        if(existingEl.classList.contains('show') || existingEl.classList.contains('collapsing')) {
+        if (existingEl.classList.contains('show') || existingEl.classList.contains('collapsing')) {
             existingEl.addEventListener('hidden.bs.modal', () => {
                 openPanel(body, title, close, footer, idmodal);
             }, { once: true });
-            if(instance) {
+            if (instance) {
                 instance.hide();
                 return null;
             }
         }
-        if(instance) {
+        if (instance) {
             instance.dispose();
         }
         existingEl.remove();
@@ -27,32 +27,36 @@ let openPanel = (body, title, close = true, footer = null, idmodal="modal-panel-
     document.body.style.removeProperty('overflow');
     document.body.style.removeProperty('padding-right');
 
-    let template = Handlebars.compile( $( "#modal-panel-message-template" ).html() );
-    let html = template( { title, body, footer, close, idmodal } );
-    $( `#${idmodal}` ).remove();
-    $( document.body ).append( $( html ) );
+    let template = Handlebars.compile($("#modal-panel-message-template").html());
+    let html = template({ title, body, footer, close, idmodal });
+    $(`#${idmodal}`).remove();
+    $(document.body).append($(html));
     let modal = new bootstrap.Modal(document.getElementById(idmodal));
     modal.show();
     return modal;
 };
 
-let closePanel = (idmodal="modal-panel-message") => {
+let closePanel = (idmodal = "modal-panel-message", thenfn = null) => {
+    console.log(`Cerrando panel ${idmodal}`);
     const el = document.getElementById(idmodal);
-    if(!el) {
+    if (!el) {
+        thenfn && thenfn();
         return null;
     }
     const modal = bootstrap.Modal.getInstance(el);
-    if(!modal) {
+    if (!modal) {
+        thenfn && thenfn();
         return null;
     }
     el.addEventListener('hidden.bs.modal', () => {
         modal.dispose();
         el.remove();
-        if(document.querySelectorAll('.modal.show').length === 0) {
+        if (document.querySelectorAll('.modal.show').length === 0) {
             document.body.classList.remove('modal-open');
             document.body.style.removeProperty('overflow');
             document.body.style.removeProperty('padding-right');
         }
+        thenfn && thenfn();
     }, { once: true });
     modal.hide();
     return modal;

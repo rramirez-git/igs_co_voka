@@ -167,23 +167,39 @@ let check_show_productos = (pk) => {
         }})
 }
 
-let personalizar_producto = (pk, nombre, svg_url) => {
-    openPanel("Cargando Modelo para personalizar", "Cargando...", false, null, 'modal_message_loading');
-    $.get(svg_url, (svg_xml) => {
-        closePanel('modal_message_loading');
-        openPanel($(`#producto-personalizacion-${pk}-template`).html(), `Personalizar ${nombre}`);
-        $(`.modal-dialog.modal-dialog-centered.modal-lg`).addClass('modal-dialog-scrollable');
-        let prod="Hola Mundo";
-        (async function (){
-            await colEvokaPers.findById(pk).then(objeto => {
-            if(typeof objeto === "undefined") {
+let personalizar_producto_open_panel = () => {
+    let pk = pp_pk;
+    let nombre = pp_nombre;
+    openPanel($(`#producto-personalizacion-${pk}-template`).html(), `Personalizar ${nombre}`);
+    const el = document.getElementById('modal-panel-message');
+    el.addEventListener('shown.bs.modal', () => {
+        const dialog = el.querySelector('.modal-dialog');
+        dialog.classList.add('modal-dialog-scrollable');
+    }, { once: true });
+    (async function () {
+        await colEvokaPers.findById(pk).then(objeto => {
+            if (typeof objeto === "undefined") {
                 colEvokaPers.insert(crea_registro(pk));
             }
-            }).catch(() => {
-                colEvokaPers.insert(crea_registro(pk));
-            });
-            await colEvokaPers.findById(pk).then(recupera_personalizacion);
-        })();
+        }).catch(() => {
+            colEvokaPers.insert(crea_registro(pk));
+        });
+        await colEvokaPers.findById(pk).then(recupera_personalizacion);
+    })();
+}
+
+let pp_pk = null;
+let pp_nombre = null;
+
+let personalizar_producto = (pk, nombre, svg_url) => {
+    pp_pk = pk;
+    pp_nombre = nombre;
+    pp_svg_url = svg_url;
+    openPanel("Cargando Modelo para personalizar", "Cargando...", false, null, 'modal_message_loading');
+    $.get(svg_url, (svg_xml) => {
+        setTimeout(() => {
+            closePanel('modal_message_loading', personalizar_producto_open_panel);
+        }, 1 * 1000);
     }).fail(() => {
         closePanel('modal_message_loading');
         alert("Error al cargar Modelo");
