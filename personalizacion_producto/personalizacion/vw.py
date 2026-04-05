@@ -1,14 +1,21 @@
 from http.client import HTTPResponse
 from io import BytesIO
+import os
+from email.mime.image import MIMEImage
+import re
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.html import strip_tags
 from django.views.generic import TemplateView
 from weasyprint import HTML
+
 
 import json
 
@@ -145,11 +152,67 @@ class List(GenericList):
 
 views.List = List
 
+def html_para_mail_function(personalizacion):
+    objeto = personalizacion
+    estilos_email = """
+    <style>
+        .email-container { font-family: Arial, sans-serif; color: #333; max-width: 800px; }
+        .table-email { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .table-email th { text-align: right; padding: 8px; border-bottom: 1px solid #ddd; width: 30%; }
+        .table-email td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        .img-container { text-align: center; margin: 30px 0; }
+    </style>
+    """
+    cuerpo_simplificado = f"""
+    <div class="email-container">
+        <h1>Personalización de producto</h1>
+        <table class="table-email">
+            <tr><th>Producto:</th><td>{objeto.producto}</td></tr>
+            <tr><th>Nombre:</th><td>{objeto.nombre}</td></tr>
+            <tr><th>Teléfono:</th><td>{objeto.telefono}</td></tr>
+            <tr><th>Correo Electrónico:</th><td>{objeto.correo_electronico}</td></tr>
+            <tr><th>Notas y Comentarios:</th><td>{objeto.notas_y_comentarios or ''}</td></tr>
+            <tr><th>Fecha de Creación:</th><td>{objeto.creacion}</td></tr>
+            <tr><th>Usuario:</th><td>{objeto.user.profile if objeto.user else 'N/A'}</td></tr>
+        </table>
+        <div id="producto-svg" class="img-container">
+            <img src="cid:imagen_personalizada" alt="Banca" style="width: 100%; max-width: 600px; height: auto;" />
+        </div>
+    </div>
+    """
+    return f"<html><head>{estilos_email}</head><body>{cuerpo_simplificado}</body></html>"
+
 def ViewPDFPersonalizacion(request, pk):
     object = Personalizacion.objects.get(pk=pk)
     html = str(render_to_string("personalizacion_producto/create_from_user.html", {
         'object': object
     }) + "")
+
+    imgpath = os.path.join(settings.MEDIA_ROOT, 'tmp', os.path.dirname(str(object.producto.imagen)))
+    tmp_png = os.path.join(imgpath, f"personalizacion_{object.pk:05d}.png")
+    pdf_buffer = BytesIO()
+    HTML(string=html).write_pdf(pdf_buffer)
+    pdf_contenido = pdf_buffer.getvalue()
+    text = strip_tags(html)
+    msg = EmailMultiAlternatives(
+        subject=f"Personalización {object.producto}",
+        body=text,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[object.correo_electronico]
+    )
+    html_para_email = html_para_mail_function(object)
+    msg.attach_alternative(html_para_email, "text/html")
+    msg.attach(f"Personalizacion {object.producto}.pdf", pdf_contenido, "application/pdf")
+    with open(tmp_png, 'rb') as f:
+        msg_img = MIMEImage(f.read())
+        msg_img.add_header('Content-ID', '<imagen_personalizada>')
+        msg_img.add_header('Content-Disposition', 'inline', filename=os.path.basename(tmp_png))
+        msg.attach(msg_img)
+    try:
+        msg.send()
+    except Exception as e:
+        print(f"Error enviando correo de personalización {object.pk}. {e}")
+
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="Personalizacion {object.producto}.pdf"'
     HTML(string=html).write_pdf(response)
