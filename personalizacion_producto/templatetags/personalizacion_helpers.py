@@ -37,10 +37,6 @@ def procesa_svg(personalizacion):
             elemento = svg_content.find(f".//*[@id='{detalle.campo.id_svg}']")
             valores_color = detalle.valor.split("||")
             elemento.set("fill", valores_color[0])
-            print(f"{detalle.campo.id_svg =}")
-            print(f"{elemento =}")
-            print(f"{elemento.get('fill') =}")
-            print(f"{valores_color =}")
             style_att = elemento.get("style")
             if style_att:
                 style_rules = style_att.split(";")
@@ -48,12 +44,11 @@ def procesa_svg(personalizacion):
                     if "fill:" in style_rule:
                         style_rules[idx] = f"fill: {valores_color[0]}"
                 elemento.set("style", ";".join(style_rules))
-                print(f"{style_rules =}")
     final_content = ET.tostring(svg_content, encoding="unicode")
 
     imgpath = path.join(settings.MEDIA_ROOT, 'tmp', path.dirname(str(personalizacion.producto.imagen)))
     tmp_svg = path.join(imgpath, path.basename(str(personalizacion.producto.imagen)))
-    tmp_png = tmp_svg + ".png"
+    tmp_png = path.join(imgpath, f"personalizacion_{personalizacion.pk:05d}.png")
     if not path.exists(imgpath):
         os.makedirs(imgpath)
     with open(tmp_svg, "w") as f:
@@ -62,7 +57,7 @@ def procesa_svg(personalizacion):
     with open(tmp_png, "rb") as f:
         tmp_png_content = base64.b64encode(f.read()).decode("utf-8")
     return SafeString(f"""<img src="data:image/png;base64, {tmp_png_content}" style="width: 100%" />""")
-    
+
     final_content = re.sub(r':?ns\d+:?', "", final_content)
     return SafeString(final_content)
 
