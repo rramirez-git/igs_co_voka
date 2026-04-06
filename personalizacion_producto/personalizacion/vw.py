@@ -24,6 +24,7 @@ from igs_app_base.views import GenericCreate
 from igs_app_base.views import GenericList
 from igs_app_base.views import GenericRead
 from igs_app_base.views import GenericViews
+from igs_app_base.models import ParametroSistema
 from producto.models import Producto
 
 from .forms import MainForm
@@ -194,11 +195,12 @@ def ViewPDFPersonalizacion(request, pk):
     HTML(string=html).write_pdf(pdf_buffer)
     pdf_contenido = pdf_buffer.getvalue()
     text = strip_tags(html)
+    recepcion = ParametroSistema.get("personalizacion", "email_personalizaciones")
     msg = EmailMultiAlternatives(
         subject=f"Personalización {object.producto}",
         body=text,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[object.correo_electronico]
+        to=[object.correo_electronico, recepcion]
     )
     html_para_email = html_para_mail_function(object)
     msg.attach_alternative(html_para_email, "text/html")
